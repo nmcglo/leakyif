@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-VARIABLE_CURRENT = False
+VARIABLE_CURRENT = True
 T = 100
 tstep = 1
 refractory_length = 10
@@ -15,6 +15,7 @@ Vthresh = 2
 V_spike = .5
 
 # Current Inputs
+Ibias = 2.2
 def myfun(x):
     Ibias = 2.2
     periods = np.arange(.1,2,.1)
@@ -34,8 +35,9 @@ def myfun(x):
 
 
 if __name__ == '__main__':
-    if sys.argv[1] == '-v':
-        VARIABLE_CURRENT = True
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '-c':
+            VARIABLE_CURRENT = False
 
     Vm = np.zeros(len(times))
     t_rest = 0
@@ -43,7 +45,10 @@ if __name__ == '__main__':
         t = times[i]
 
         if t > t_rest:
-            Vm[i] = Vm[i-1] + (-Vm[i-1] + myfun(t)*Rmem) / tau_m * tstep
+            if VARIABLE_CURRENT == True:
+                Vm[i] = Vm[i-1] + ((-Vm[i-1] + myfun(t)*Rmem) / tau_m) * tstep
+            else:
+                Vm[i] = Vm[i-1] + ((-Vm[i-1] + Ibias*Rmem) / tau_m) * tstep
         if Vm[i] >= Vthresh:
             Vm[i] = Vm[i] + V_spike
             t_rest = t + refractory_length
