@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 VARIABLE_CURRENT = True
-T = 100
+N = 100
+T = 1000
 tstep = 1
 refractory_length = 10
 times = np.arange(0,T,tstep)
@@ -39,7 +40,7 @@ if __name__ == '__main__':
         if sys.argv[1] == '-c':
             VARIABLE_CURRENT = False
 
-    Vm = np.zeros(len(times))
+    Vm = np.zeros(N,len(times))
     t_rest = 0
     for i in range(0, len(times)):
         t = times[i]
