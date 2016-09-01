@@ -2,6 +2,15 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+RandomWeightFlag = False
+
+if(len(sys.argv) > 1):
+    if "-w" in sys.argv:
+        RandomWeightFlag = True
+
+
+np.random.seed(1)
 N = 100
 T = 1000
 tstep = 1
@@ -15,12 +24,15 @@ tau_m = Rmem*Cmem
 Vthresh = 2.3
 V_spike = .5
 
-J_0 = 1
+J_0 = 25
 
 #Data Matrices
 
-Weights = np.zeros((N,N)) + (J_0/N)
-# Weights = np.random.randn(N,N)
+if RandomWeightFlag is False:
+    Weights = np.zeros((N,N)) + (J_0/N)
+else:
+    Weights = np.random.randn(N,N)/N
+
 # Weights[0:int(N*2/3),:] = abs(Weights[0:int(N*2/3),:])  #Exitatory - maybe buggy
 # Weights[int(N*2/3):N,:] = -abs(Weights[int(N*2/3):N,:]) #Inhibiatory - maybe buggy
 
@@ -101,4 +113,7 @@ if __name__ == '__main__':
     raster(Fired)
     plt.ylim(0,N)
     plt.xlim(0,T)
+    plt.title("Neurons Fired")
+    plt.xlabel("Time t")
+    plt.ylabel("Neuron #")
     plt.show()
