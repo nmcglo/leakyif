@@ -14,7 +14,7 @@ for p = 1:length(Populations)-1
         startndx = sum(Populations(1:p-1))+1
         endndx = sum(Populations(1:p))
     end
-    
+
     for i = startndx:endndx
             for j = endndx+1:sum(Populations(1:p+1))
                 W(i,j) = 1;
