@@ -1,2 +1,2 @@
-Layers: 3
-Populations: 2,10,1
+Layers: 2
+Populations: 25,1
