@@ -42,7 +42,7 @@ def parseGraphInput(inputFilename):
             # print(i)
             for j in range(endndx+1,sum(Populations[0:p+2])):
                 print("\t",i,j)
-                W[i,j] = np.random.randn() * .25 + 1;
+                W[i,j] = np.random.randn() * .5 + 1;
 
 
     print("\nInteraction Matrix:")
