@@ -32,15 +32,15 @@ def init():
     np.random.seed(1)
     T = 1000
     tstep = 1
-    refractory_length = 100
+    refractory_length = 30
     times = np.arange(0,T,tstep)
 
     # same for all neurons
-    Rmem = 3
-    Cmem = 10
+    Rmem = 10
+    Cmem = 25
     tau_m = Rmem*Cmem
     Vthresh = 1.6
-    V_spike = .5
+    V_spike = .25
 
     J_0 = 50
 
@@ -129,7 +129,7 @@ def getInputCurrentAtTime(t,nodeid):
     return weightSum + Iext
 
 def isFiredDecision():
-    chanceOfFiringEachTimestep = 10/N
+    chanceOfFiringEachTimestep = .5/N
 
     rn = np.random.rand()
     if rn > 1 - chanceOfFiringEachTimestep:
@@ -146,8 +146,13 @@ if __name__ == '__main__':
     print("Final Weights\n", Weights)
 
     print("Beginning Simulation...")
-    # t_rest = np.zeros(N)
-    t_rest = np.random.rand(N)*refractory_length
+
+
+    if RandomInputFiring is False:
+        t_rest = np.random.rand(N)*refractory_length
+    else:
+        t_rest = np.zeros(N)
+
     for i in range(0,len(t_rest)):
         t_rest[i] = int(t_rest[i])
     for i in range(1, len(times)-1):
