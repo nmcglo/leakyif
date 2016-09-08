@@ -8,6 +8,7 @@ RandomWeightFlag = False
 AllToAllFlag = False
 NoInputLayerFlag = False
 AllExitatoryFlag = False
+RandomInputFiring = False
 
 
 if(len(sys.argv) > 1):
@@ -19,6 +20,9 @@ if(len(sys.argv) > 1):
         NoInputLayerFlag = True
     if "-E" in sys.argv:
         AllExitatoryFlag = True
+    if "-randpre" in sys.argv:
+        RandomInputFiring = True
+
 
 def init():
     global N, Layers, Populations, InputIDs, Weights, times, T, tstep, refractory_length, Rmem, Cmem, tau_m, Vthresh, V_spike, J_0, Vm, Fired, periods, Ibias
@@ -32,7 +36,7 @@ def init():
     times = np.arange(0,T,tstep)
 
     # same for all neurons
-    Rmem = 1.1
+    Rmem = 3
     Cmem = 10
     tau_m = Rmem*Cmem
     Vthresh = 1.6
@@ -41,7 +45,7 @@ def init():
     J_0 = 50
 
     # Current Inputs
-    Ibias = 1.4
+    Ibias = 1.5
 
     N, Layers, Populations, InputIDs, Weights = gp.parseGraphInput('input.txt')
 
@@ -124,6 +128,15 @@ def getInputCurrentAtTime(t,nodeid):
 
     return weightSum + Iext
 
+def isFiredDecision():
+    chanceOfFiringEachTimestep = 10/N
+
+    rn = np.random.rand()
+    if rn > 1 - chanceOfFiringEachTimestep:
+        return True
+    else:
+        return False
+
 
 if __name__ == '__main__':
     print("Leaky Integrate and Fire Neural Model Simulation - Alpha\n")
@@ -142,13 +155,26 @@ if __name__ == '__main__':
 
         #put the loop for per node here
         for n in range(0,N): #for each node n in N
-            if t > t_rest[n]:
-                Vm[n,t] = Vm[n,i-1] + ((-Vm[n,t-1] + getInputCurrentAtTime(t,n)*Rmem) / tau_m) #* timestep
-            if Vm[n,t] >= Vthresh:
-                print("Node %i Fired at time %i!" % (n, t))
-                Vm[n,t] = Vm[n,t] + V_spike
-                Fired[n,t] = 1
-                t_rest[n] = t + np.random.rand()*refractory_length
+            if n in InputIDs and RandomInputFiring:
+                #Do random firing stuff here: Fired[n,t] = some random choice of 0 or 1 if t > t_test[n]
+                if t > t_rest[n]:
+                    toFire = isFiredDecision()
+                    if toFire is True:
+                        Fired[n,t] = 1
+                        t_rest[n] = t + np.random.rand()*refractory_length
+            else:
+                #Not an input node (or RandomINputFiring is not flagged), thus do traditional integrating and firing
+                if t > t_rest[n]:
+                    Vm[n,t] = Vm[n,i-1] + ((-Vm[n,t-1] + getInputCurrentAtTime(t,n)*Rmem) / tau_m) #* timestep
+                if Vm[n,t] >= Vthresh:
+                    print("Node %i Fired at time %i!" % (n, t))
+                    Vm[n,t] = Vm[n,t] + V_spike
+                    Fired[n,t] = 1
+                    t_rest[n] = t + np.random.rand()*refractory_length
+
+
+
+
 
     print("Simulation Complete, generating graph...")
     fig1 = raster(Fired)
