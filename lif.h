@@ -11,6 +11,8 @@ Neil McGlohon
 
 #include "ross.h"
 
+#define FALSE 0
+#define TRUE 1
 
 
 //STRUCTS ------------------------------
@@ -19,22 +21,26 @@ typedef struct
 {
      tw_lpid sender;
      tw_lpid recipient;
+     double weight_in_conn; //Weight of the incoming connection
 } neuron_mess;
 
 
 typedef struct
 {
      int refract_length; //Rest time after spiking before membrane voltage is allowed to accrue
-     double Rmem; //Resistance of the membrane
-     double Cmem; //Capacitance of the membrane
-     double tau; //Time constant. Typically Rmem * Cmem
+     double R_mem; //Resistance of the membrane
+     double C_mem; //Capacitance of the membrane
+     double Tau; //Time constant. Typically Rmem * Cmem
 
-     double Vthresh; //Threshold by which the voltage spikes if crossed
-     double Vspike; //Amount that the voltage is spiked when the threshold is crossed
+     double V_thresh; //Threshold by which the voltage spikes if crossed
+     double V_spike; //Amount that the voltage is spiked when the threshold is crossed
 
-     double Ibias; //The bias of the presynaptic current
+     double I_bias; //The bias of the presynaptic current
 
-     double Vmem; //The Voltage of the membrane
+     double V_mem; //The Voltage of the membrane
+
+     bool is_Input_Neuron; //Is the neuron an input neuron?
+     double chance_of_firing_each_timestep; //Chance of fireing each Timestep
 } lif_neuron_state;
 
 
@@ -65,6 +71,8 @@ unsigned int nlp_per_pe;
 unsigned int custom_LPs_per_pe;
 
 int total_neurons;
+int simulation_length;
+int total_input_neurons;
 
 
 #endif
