@@ -24,7 +24,17 @@ typedef struct
 
 typedef struct
 {
+     int refract_length; //Rest time after spiking before membrane voltage is allowed to accrue
+     double Rmem; //Resistance of the membrane
+     double Cmem; //Capacitance of the membrane
+     double tau; //Time constant. Typically Rmem * Cmem
 
+     double Vthresh; //Threshold by which the voltage spikes if crossed
+     double Vspike; //Amount that the voltage is spiked when the threshold is crossed
+
+     double Ibias; //The bias of the presynaptic current
+
+     double Vmem; //The Voltage of the membrane
 } lif_neuron_state;
 
 
@@ -53,6 +63,8 @@ extern tw_lptype model_lps[];
 tw_stime lookahead;
 unsigned int nlp_per_pe;
 unsigned int custom_LPs_per_pe;
+
+int total_neurons;
 
 
 #endif
