@@ -19,6 +19,12 @@ Neil McGlohon
 
 typedef struct
 {
+     tw_lpid forwardNeighborID
+     double synapseWeight
+} synapticConnection;
+
+typedef struct
+{
      tw_lpid sender;
      tw_lpid recipient;
      double weight_in_conn; //Weight of the incoming connection
@@ -41,6 +47,10 @@ typedef struct
 
      bool is_Input_Neuron; //Is the neuron an input neuron?
      double chance_of_firing_each_timestep; //Chance of fireing each Timestep
+
+     int number_of_outgoing_connections;
+     struct synapticConnection outgoing_weights[10000]; //TODO hardcoded array size, changeagble?
+
 } lif_neuron_state;
 
 

@@ -10,7 +10,7 @@ Neil McGlohon
 #include "lif.h"
 
 
-//--------------Mail box stuff-------------
+//--------------LIF Neuron stuff-------------
 
 void lif_init (mailbox_state *s, tw_lp *lp)
 {
@@ -34,19 +34,26 @@ void lif_init (mailbox_state *s, tw_lp *lp)
      if self < total_input_neurons
      {
           self->is_Input_Neuron = TRUE;
-          self->chance_of_firing_each_timestep = .5 / total_neurons
+          self->chance_of_firing_each_timestep = .5 / total_neurons;
      }
 
-     
 
-     //start
 
 }
 
 void lif_prerun(mailbox_state *s, tw_lp *lp)
 {
+     int self = lp -> gid;
 
+     int total_firings = (int) (self->chance_of_firing_each_timestep * simulation_length);
+
+     for(int i = 0; i < total_firings; i++)
+     {
+          tw_stime scheduled_firing_big_tick = (int) tw_rand_unif(self->rng)*simulation_length;
+
+     }
 }
+
 
 
 void lif_event_handler(mailbox_state *s, tw_bf *bf, letter *in_msg, tw_lp *lp)
