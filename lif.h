@@ -9,6 +9,7 @@ Neil McGlohon
 #ifndef _lif_h
 #define _lif_h
 
+#include "Python.h"
 #include "ross.h"
 
 #define FALSE 0
@@ -27,7 +28,7 @@ typedef struct
 {
      tw_lpid sender;
      tw_lpid recipient;
-     double weight_in_conn; //Weight of the incoming connection
+     double weight_in_conn; //Weight of the incoming connection //TODO this may be cheaper to have a lookup upon receipt instead
 } neuron_mess;
 
 
@@ -49,7 +50,7 @@ typedef struct
      double chance_of_firing_each_timestep; //Chance of fireing each Timestep
 
      int number_of_outgoing_connections;
-     struct synapticConnection outgoing_weights[10000]; //TODO hardcoded array size, changeagble?
+     struct synapticConnection outgoing_weights[400]; //TODO hardcoded array size, changeagble?
 
 } lif_neuron_state;
 
@@ -83,6 +84,17 @@ unsigned int custom_LPs_per_pe;
 int total_neurons;
 int simulation_length;
 int total_input_neurons;
+
+char* inputFilename = "input.txt"
+
+PyObject* myModuleString = PyString_FromString((char*)"graphparser");
+PyObject* myModule = PyImport_Import(myModuleString);
+
+PyObject* myFunction = PyObject_GetAttrString(myModule,(char*)"parseGraphInput");
+PyObject* args = PyTuple_pack(1,PyString_FromString(inputFilename));
+
+
+
 
 
 #endif
