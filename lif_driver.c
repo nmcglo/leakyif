@@ -12,7 +12,7 @@ Neil McGlohon
 
 //--------------LIF Neuron stuff-------------
 
-void lif_init (mailbox_state *s, tw_lp *lp)
+void lif_init (lif_neuron_state *s, tw_lp *lp)
 {
      int self = lp -> gid;
 
@@ -41,7 +41,7 @@ void lif_init (mailbox_state *s, tw_lp *lp)
 
 }
 
-void lif_prerun(mailbox_state *s, tw_lp *lp)
+void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 {
      int self = lp -> gid;
 
@@ -50,23 +50,35 @@ void lif_prerun(mailbox_state *s, tw_lp *lp)
      for(int i = 0; i < total_firings; i++)
      {
           tw_stime scheduled_firing_big_tick = (int) tw_rand_unif(self->rng)*simulation_length;
+          //Send self message at this time
 
+          tw_event *e = tw_event_new(self,scheduled_firing_big_tick,lp);
+          neuron_mess *mess = tw_event_data(e);
+          mess->sender = self;
+          mess->recipient = self;
+          tw_event_send(e);
      }
+
+
+
 }
 
 
 
-void lif_event_handler(mailbox_state *s, tw_bf *bf, letter *in_msg, tw_lp *lp)
+void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
+{
+
+
+
+
+}
+
+void lif_RC_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
 {
 
 }
 
-void lif_RC_event_handler(mailbox_state *s, tw_bf *bf, letter *in_msg, tw_lp *lp)
-{
-
-}
-
-void lif_final(mailbox_state *s, tw_lp *lp)
+void lif_final(lif_neuron_state *s, tw_lp *lp)
 {
 
 }
