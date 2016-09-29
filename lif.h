@@ -85,13 +85,7 @@ int total_neurons;
 int simulation_length;
 int total_input_neurons;
 
-char* inputFilename = "input.txt"
 
-PyObject* myModuleString = PyString_FromString((char*)"graphparser");
-PyObject* myModule = PyImport_Import(myModuleString);
-
-PyObject* myFunction = PyObject_GetAttrString(myModule,(char*)"parseGraphInput");
-PyObject* args = PyTuple_pack(1,PyString_FromString(inputFilename));
 
 
 
