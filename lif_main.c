@@ -66,6 +66,18 @@ void displayModelSettings()
 #define lif_main main
 int lif_main(int argc, char** argv, char **env)
 {
+     system("python3 graphParser.py");
+     FILE* fp;
+
+     fread(&total_neurons,sizeof(int),1,fp);
+     int total_input_neurons;
+     fread(&total_input_neurons,sizeof(int),1,fp);
+     int input_neurons[total_input_neurons];
+     fread(&input_neurons,sizeof(input_neurons),1,fp);
+
+     extern double Weight_Matrix[total_neurons][total_neurons];
+     fread(&Weight_Matrix,sizeof(Weight_Matrix),1,fp);
+
 
      return 0;
 }

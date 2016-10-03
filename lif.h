@@ -89,6 +89,4 @@ int total_input_neurons;
 
 
 
-
-
 #endif
