@@ -9,8 +9,8 @@ Neil McGlohon
 #ifndef _lif_h
 #define _lif_h
 
-#include "Python.h"
 #include "ross.h"
+#include <stdbool.h>
 
 #define FALSE 0
 #define TRUE 1
@@ -20,8 +20,8 @@ Neil McGlohon
 
 typedef struct
 {
-     tw_lpid forwardNeighborID
-     double synapseWeight
+     tw_lpid forwardNeighborID;
+     double synapseWeight;
 } synapticConnection;
 
 typedef struct
@@ -50,7 +50,7 @@ typedef struct
      double chance_of_firing_each_timestep; //Chance of fireing each Timestep
 
      int number_of_outgoing_connections;
-     struct synapticConnection outgoing_weights[400]; //TODO hardcoded array size, changeagble?
+     synapticConnection outgoing_weights[400]; //TODO hardcoded array size, changeagble?
 
 } lif_neuron_state;
 

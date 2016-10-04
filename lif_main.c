@@ -75,7 +75,7 @@ int lif_main(int argc, char** argv, char **env)
      int input_neurons[total_input_neurons];
      fread(&input_neurons,sizeof(input_neurons),1,fp);
 
-     extern double Weight_Matrix[total_neurons][total_neurons];
+     double Weight_Matrix[total_neurons][total_neurons];
      fread(&Weight_Matrix,sizeof(Weight_Matrix),1,fp);
 
 

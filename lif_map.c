@@ -1,3 +1,5 @@
+#include "lif.h"
+
 
 //Given an LP's GID (global ID)
 //return the PE (aka node, MPI Rank)

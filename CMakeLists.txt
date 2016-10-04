@@ -16,17 +16,17 @@ SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_SOURCE_DIR}/model_config.h.in PROPER
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/model_config.h PROPERTIES GENERATED TRUE)
 
 # All source files for the model
-SET(mail_srcs
+SET(leakyif_srcs
+	lif.h
 	lif_main.c
 	lif_driver.c
 	lif_map.c
-	lif.h
 	model_config.h
 )
 
-# Set the executable name here: mail
-# You will be executing the ./mail binary
-ADD_EXECUTABLE(mail ${leakyif_srcs})
+# Set the executable name here: leakyif
+# You will be executing the ./leakyif binary
+ADD_EXECUTABLE(leakyif ${leakyif_srcs})
 
 TARGET_LINK_LIBRARIES(leakyif ROSS m)
 ## Alternatively, use this command with RIO
