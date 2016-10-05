@@ -11,6 +11,7 @@ Neil McGlohon
 
 #include "ross.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define FALSE 0
 #define TRUE 1
@@ -84,6 +85,8 @@ unsigned int custom_LPs_per_pe;
 int total_neurons;
 int simulation_length;
 int total_input_neurons;
+
+// double** Weight_Matrix;
 
 
 

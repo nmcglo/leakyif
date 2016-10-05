@@ -66,17 +66,64 @@ void displayModelSettings()
 #define lif_main main
 int lif_main(int argc, char** argv, char **env)
 {
-     system("python3 graphParser.py");
+     system("python3 parseInput.py");
      FILE* fp;
+     fp = fopen("generatedInput.dat", "rb");
 
+     printf("Input File Loading...\n");
+
+     //Get Total Neurons
      fread(&total_neurons,sizeof(int),1,fp);
+     printf("Total Neurons: %i\n",total_neurons);
+
+     //Get Total Input Neurons
      int total_input_neurons;
      fread(&total_input_neurons,sizeof(int),1,fp);
-     int input_neurons[total_input_neurons];
-     fread(&input_neurons,sizeof(input_neurons),1,fp);
+     printf("Total Input Neurons: %i\n",total_input_neurons);
 
-     double Weight_Matrix[total_neurons][total_neurons];
-     fread(&Weight_Matrix,sizeof(Weight_Matrix),1,fp);
+     //Get Input Neuron IDs
+     double input_neurons_temp[total_input_neurons];
+     fread(input_neurons_temp,sizeof(input_neurons_temp),1,fp);
+
+
+     //Get Weight Matrix
+
+
+     double* Weight_Matrix_temp;
+     Weight_Matrix_temp = calloc(total_neurons*total_neurons, sizeof(*Weight_Matrix_temp));
+
+     fread(Weight_Matrix_temp,sizeof(double)*total_neurons*total_neurons,1,fp);
+     printf("Input File Loaded.\n");
+
+     // for( int i = 0; i < total_neurons; i++)
+     // {
+     //      for(int j = 0; j < total_neurons; j++)
+     //      {
+     //                printf(" %f ",Weight_Matrix_temp[j + total_neurons*i]);
+     //      }
+     //      printf("\n");
+     // }
+
+     double** Weight_Matrix;
+
+     Weight_Matrix = malloc(total_neurons * sizeof(double *));
+     for(int i = 0; i < total_neurons; i++)
+     {
+          Weight_Matrix[i] = malloc(total_neurons * sizeof(double));
+     }
+
+     for( int i = 0; i < total_neurons; i++)
+     {
+          for(int j = 0; j < total_neurons; j++)
+          {
+                    Weight_Matrix[i][j] = Weight_Matrix_temp[j + total_neurons*i];
+                    printf(" %f ",Weight_Matrix[i][j]);
+          }
+          printf("\n");
+     }
+
+
+
 
 
      return 0;
