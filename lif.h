@@ -86,7 +86,9 @@ int total_neurons;
 int simulation_length;
 int total_input_neurons;
 
-// double** Weight_Matrix;
+int* input_neruons;
+
+double** Weight_Matrix;
 
 
 

@@ -49,6 +49,15 @@ void displayModelSettings()
           {
                printf("*");
           }
+          printf("\n");
+
+          printf("Leaky Integrate and Fire Model Configuration:\n");
+          printf("\tnnodes: %i\n", tw_nnodes());
+          printf("\tg_tw_nlp: %llu\n", g_tw_nlp);
+
+          printf("\tNLPs per PE: %i\n", nlp_per_pe);
+
+          printf("\tTotal Neurons: %i\n", total_neurons);
 
           //Put your settings to print here
 
@@ -61,10 +70,7 @@ void displayModelSettings()
      }
 }
 
-
-//for doxygen
-#define lif_main main
-int lif_main(int argc, char** argv, char **env)
+void parse_and_init()
 {
      system("python3 parseInput.py");
      FILE* fp;
@@ -74,37 +80,30 @@ int lif_main(int argc, char** argv, char **env)
 
      //Get Total Neurons
      fread(&total_neurons,sizeof(int),1,fp);
-     printf("Total Neurons: %i\n",total_neurons);
+     // printf("Total Neurons: %i\n",total_neurons);
 
      //Get Total Input Neurons
-     int total_input_neurons;
      fread(&total_input_neurons,sizeof(int),1,fp);
-     printf("Total Input Neurons: %i\n",total_input_neurons);
+     // printf("Total Input Neurons: %i\n",total_input_neurons);
 
      //Get Input Neuron IDs
-     double input_neurons_temp[total_input_neurons];
+     double input_neurons_temp[total_input_neurons]; //TODO python ctypes is requiring doubles, find out how to write binary ints
      fread(input_neurons_temp,sizeof(input_neurons_temp),1,fp);
 
+     input_neruons = malloc(total_input_neurons * sizeof(int));
+     for(int i = 0; i < total_input_neurons; i++)
+     {
+          input_neruons[i] = (int)input_neurons_temp[i];
+          // printf("%i ",input_neruons[i]);
+     }
+     // printf("\n");
 
      //Get Weight Matrix
-
-
      double* Weight_Matrix_temp;
      Weight_Matrix_temp = calloc(total_neurons*total_neurons, sizeof(*Weight_Matrix_temp));
 
      fread(Weight_Matrix_temp,sizeof(double)*total_neurons*total_neurons,1,fp);
      printf("Input File Loaded.\n");
-
-     // for( int i = 0; i < total_neurons; i++)
-     // {
-     //      for(int j = 0; j < total_neurons; j++)
-     //      {
-     //                printf(" %f ",Weight_Matrix_temp[j + total_neurons*i]);
-     //      }
-     //      printf("\n");
-     // }
-
-     double** Weight_Matrix;
 
      Weight_Matrix = malloc(total_neurons * sizeof(double *));
      for(int i = 0; i < total_neurons; i++)
@@ -117,13 +116,37 @@ int lif_main(int argc, char** argv, char **env)
           for(int j = 0; j < total_neurons; j++)
           {
                     Weight_Matrix[i][j] = Weight_Matrix_temp[j + total_neurons*i];
-                    printf(" %f ",Weight_Matrix[i][j]);
+                    // printf("%.2f ",Weight_Matrix[i][j]);
           }
-          printf("\n");
+          // printf("\n");
      }
+}
 
 
+//for doxygen
+#define lif_main main
+int lif_main(int argc, char** argv, char **env)
+{
+     parse_and_init();
 
+     // tw_opt_add(model_opts);
+     tw_init(&argc, &argv);
+
+     nlp_per_pe = 1;
+     custom_LPs_per_pe = 1;
+
+     g_tw_nlp = (total_neurons);
+     g_tw_lookahead = 1;
+     custom_LPs_per_pe = (g_tw_nlp / g_tw_npe)/tw_nnodes();
+
+     displayModelSettings();
+
+     g_tw_lp_types = model_lps;
+     // g_tw_lp_typemap = lpTypeMapper;
+
+     tw_define_lps(custom_LPs_per_pe, sizeof(neuron_mess));
+
+     tw_lp_setup_types();
 
 
      return 0;
