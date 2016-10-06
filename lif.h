@@ -19,17 +19,16 @@ Neil McGlohon
 
 //STRUCTS ------------------------------
 
-typedef struct
-{
-     tw_lpid forwardNeighborID;
-     double synapseWeight;
-} synapticConnection;
+// typedef struct
+// {
+//      tw_lpid reverseNeighborID;
+//      double synapseWeight;
+// } synapticConnection;
 
 typedef struct
 {
      tw_lpid sender;
      tw_lpid recipient;
-     double weight_in_conn; //Weight of the incoming connection //TODO this may be cheaper to have a lookup upon receipt instead
 } neuron_mess;
 
 
@@ -50,8 +49,10 @@ typedef struct
      bool is_Input_Neuron; //Is the neuron an input neuron?
      double chance_of_firing_each_timestep; //Chance of fireing each Timestep
 
-     int number_of_outgoing_connections;
-     synapticConnection outgoing_weights[400]; //TODO hardcoded array size, changeagble?
+     tw_lpid* outgoing_adjacency;
+
+     int number_of_incoming_connections;
+     double* incoming_weights;
 
 } lif_neuron_state;
 

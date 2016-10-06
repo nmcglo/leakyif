@@ -135,6 +135,8 @@ int lif_main(int argc, char** argv, char **env)
      nlp_per_pe = 1;
      custom_LPs_per_pe = 1;
 
+     simulation_length = 1000;
+
      g_tw_nlp = (total_neurons);
      g_tw_lookahead = 1;
      custom_LPs_per_pe = (g_tw_nlp / g_tw_npe)/tw_nnodes();
@@ -147,6 +149,9 @@ int lif_main(int argc, char** argv, char **env)
      tw_define_lps(custom_LPs_per_pe, sizeof(neuron_mess));
 
      tw_lp_setup_types();
+
+     tw_run();
+     tw_end();
 
 
      return 0;

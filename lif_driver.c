@@ -37,15 +37,40 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
           s->chance_of_firing_each_timestep = .5 / total_neurons;
      }
 
+     int outConnections = 0;
+     s->outgoing_adjacency = calloc(total_neurons, sizeof(tw_lpid));
+     for(int c = 0; c < total_neurons; c++)
+     {
+          if(Weight_Matrix[self][c] != 0)
+          {
+               outConnections +=1;
+               s->outgoing_adjacency[c] = 1;
+          }
+     }
 
-
+     int inConnections = 0;
+     s->incoming_weights = calloc(total_neurons, sizeof(double));
+     for(int r = 0; r < total_neurons; r++)
+     {
+          double tempInWeight = Weight_Matrix[r][self]; //Weight of sender r to recipient self
+          if(tempInWeight != 0)
+          {
+               s->incoming_weights[r] = tempInWeight;
+               inConnections+= 1;
+          }
+     }
+     s->number_of_incoming_connections = inConnections;
 }
 
 void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 {
      int self = lp -> gid;
 
+
      int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
+
+     printf("%d: I am a neuron! Total firings: %i\n",self, total_firings);
+
 
      for(int i = 0; i < total_firings; i++)
      {
@@ -58,16 +83,29 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
           mess->recipient = self;
           tw_event_send(e);
      }
-
-
-
 }
 
 
 
 void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
 {
+     int self = lp -> gid;
 
+     printf("%i: I received a firing!\n",self);
+
+     //If the message is from yourself, you're an input neuron, and you need to fire now. Do fire stuff
+
+     //Else
+
+          //Get who the message is from
+
+          //Lookup the strength of the message from your states incoming weights array
+
+          //Integrate your vthresh according to the LIF model
+
+          //Do you fire?
+
+               //If so then send your firing messages with some jitter
 
 
 
