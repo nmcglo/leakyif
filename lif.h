@@ -16,6 +16,10 @@ Neil McGlohon
 #define FALSE 0
 #define TRUE 1
 
+#define HEARTBEAT_MESS 0
+#define FIRING_MESS 1
+#define INPUT_FIRE_ORDER 2
+
 
 //STRUCTS ------------------------------
 
@@ -29,6 +33,7 @@ typedef struct
 {
      tw_lpid sender;
      tw_lpid recipient;
+     int mess_type;
 } neuron_mess;
 
 
@@ -43,17 +48,24 @@ typedef struct
      double V_spike; //Amount that the voltage is spiked when the threshold is crossed
 
      double I_bias; //The bias of the presynaptic current
+     double I_input_at_big_tick; //The input current, based on the weights of neurons that sent messages to it in this tick
 
      double V_mem; //The Voltage of the membrane
 
+     bool should_fire_at_next_tick;
+
      bool is_Input_Neuron; //Is the neuron an input neuron?
      double chance_of_firing_each_timestep; //Chance of fireing each Timestep
+
+     int firing_count;
 
      int number_of_outgoing_connections;
      tw_lpid* outgoing_adjacency;
 
      int number_of_incoming_connections;
      double* incoming_weights;
+
+     double* V_history;
 
 } lif_neuron_state;
 

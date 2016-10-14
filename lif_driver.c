@@ -22,12 +22,15 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      s->C_mem = 25;
      s->Tau = s->R_mem * s->C_mem;
 
-     s->V_thresh = 1.6;
+     s->V_thresh = .5;
      s->V_spike = .25;
 
      s->I_bias = 1.5;
+     s->I_input_at_big_tick = 0;
 
      s->V_mem = 0;
+
+     s->should_fire_at_next_tick = false;
 
      s->is_Input_Neuron = FALSE;
      s->chance_of_firing_each_timestep = 0;
@@ -36,6 +39,8 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
           s->is_Input_Neuron = TRUE;
           s->chance_of_firing_each_timestep = .5 / total_neurons;
      }
+
+     s->firing_count = 0;
 
      //----------------------------
      //Outgoing connections stuff
@@ -71,29 +76,56 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
           }
      }
      s->number_of_incoming_connections = inConnections;
+
+     s->V_history = calloc(simulation_length, sizeof(double));
 }
 
 void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 {
      int self = lp -> gid;
 
-
-     int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
-
-     printf("%d: I am a neuron! Total firings: %i\n",self, total_firings);
-
-
-     for(int i = 0; i < total_firings; i++)
+     if(s->is_Input_Neuron)
      {
-          tw_stime scheduled_firing_big_tick = (int) tw_rand_unif(lp->rng)*simulation_length;
-          //Send self message at this time
+          int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
 
-          tw_event *e = tw_event_new(self,scheduled_firing_big_tick,lp);
-          neuron_mess *mess = tw_event_data(e);
-          mess->sender = self;
-          mess->recipient = self;
-          tw_event_send(e);
+          printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
+
+
+          for(int i = 0; i < total_firings; i++)
+          {
+
+               double scheduled_firing_big_tick = tw_rand_unif(lp->rng)*simulation_length;
+               double jitter = tw_rand_unif(lp->rng)/(total_neurons * 10000);
+
+               double big_tick_with_jitter = ((int) scheduled_firing_big_tick) + jitter;
+
+               //Send self message at this time
+               // printf("%d: Scheudled fire order for time: %i\n",self,nextTime);
+               tw_event *e = tw_event_new(self,big_tick_with_jitter,lp);
+               neuron_mess *mess = tw_event_data(e);
+               mess->mess_type = INPUT_FIRE_ORDER;
+               mess->sender = self;
+               mess->recipient = self;
+               tw_event_send(e);
+          }
      }
+     else
+     {
+          for(int i = 0; i < simulation_length; i++)
+          {
+               double jitter = tw_rand_unif(lp->rng)/(total_neurons * 10000);
+               double big_tick_with_jitter = i + jitter;
+
+               tw_event *e = tw_event_new(self,big_tick_with_jitter,lp);
+               neuron_mess *mess = tw_event_data(e);
+               mess->mess_type = HEARTBEAT_MESS;
+               mess->sender = self;
+               mess->recipient = self;
+               tw_event_send(e);
+
+          }
+     }
+
 }
 
 //This method handles the voltage change and scheduling all messages with neighbors
@@ -103,48 +135,86 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      for(int rec = 0; rec < s->number_of_outgoing_connections; rec++)
      {
           tw_stime now = tw_now(lp);
-          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons * 1000); //TODO this is suspicious
+          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons * 10000); //TODO this is suspicious
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
           tw_event *e = tw_event_new(recipient, now+delay, lp);
           neuron_mess *mess = tw_event_data(e);
+          mess->mess_type = FIRING_MESS;
           mess->sender = self;
           mess->recipient = recipient;
           tw_event_send(e);
      }
+     s->V_mem = 0;
+     s->firing_count++;
+}
 
-     s->V_thresh = 0;
+
+double get_external_current_at_time(double theTime, tw_lpid lpid)
+{
+     //TODO make this a variable function
+     return 1.5;
 }
 
 
 
 void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
 {
-     int self = lp -> gid;
-
-     printf("%i: I received a firing!\n",self);
-
-     if(in_msg->sender == self) //then you're receiving a message from yourself that you need to fire now
+     if(tw_now(lp) < simulation_length)
      {
-          fire(s, lp);
+          int self = lp -> gid;
+
+          if(in_msg->mess_type == HEARTBEAT_MESS) //Heartbeat message signifies at big ticks to integrate and check if there should be a firing or not
+          {
+               // printf("%i: I received a heartbeat message\n",self);
+               double lastVmem = s->V_mem;
+               double I_input = s->I_input_at_big_tick;
+
+               //Integrate
+               s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
+
+               //Do you fire?
+               if(s->V_mem > s->V_thresh)
+               {
+                    //If so then set yourselfs should fire to true
+                    s->should_fire_at_next_tick = true;
+               }
+
+
+               if(s->should_fire_at_next_tick)
+               {
+                    printf("%i: Heartbeat & I should fire. Going to do that now!\n",self);
+                    fire(s,lp);
+                    s->should_fire_at_next_tick=false;
+               }
+               else
+               {
+                    //TODO this is the dirac method where you only care about inputs that fired AT THIS MOMENT thus...
+                    s->I_input_at_big_tick = 0; //reset the input current.
+               }
+
+               s->V_history[(int)tw_now(lp)] = s->V_mem;
+
+
+          }
+          else if(in_msg->mess_type == FIRING_MESS) //You received a firing message, do stuff
+          {
+               // printf("%i: I received a firing!\n",self);
+
+               //Get who the message is from
+               tw_lpid sender = in_msg->sender;
+
+               //Lookup the strength of the message from your states incoming weights array
+               double inWeight = s->incoming_weights[sender];
+               s->I_input_at_big_tick += inWeight;
+          }
+          else if(in_msg->mess_type == INPUT_FIRE_ORDER) //You received an input firing order, fire now. regardless of anything. assume this is big tick.
+          {
+               tw_stime theTime = tw_now(lp);
+               // printf("%i: I received a firing order at %f: firing...\n",self,theTime);
+               fire(s, lp);
+          }
      }
-
-     //if not an input neuron
-     if(s->is_Input_Neuron == false)
-     {
-          //Get who the message is from
-
-          //Lookup the strength of the message from your states incoming weights array
-
-          //Integrate your vthresh according to the LIF model
-
-          //Do you fire?
-
-               //If so then send your firing messages with some jitter
-     }
-
-
-
 
 
 }
@@ -156,5 +226,14 @@ void lif_RC_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, t
 
 void lif_final(lif_neuron_state *s, tw_lp *lp)
 {
+     int self = lp->gid;
+     printf("%d: Total Firings Done: %d\n",self,s->firing_count);
 
+     if(self == 125)
+     {
+          for(int i = 0; i < simulation_length; i++)
+          {
+               printf("%f ",s->V_history[i]);
+          }
+     }
 }
