@@ -14,6 +14,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/model_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/model_config.h @ONLY)
 configure_file(parseInput.py parseInput.py COPYONLY)
 configure_file(graphParserV1.py graphParserV1.py COPYONLY)
+configure_file(plotHelper.py plotHelper.py COPYONLY)
 configure_file(input.txt input.txt COPYONLY)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_SOURCE_DIR}/model_config.h.in PROPERTIES GENERATED FALSE)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/model_config.h PROPERTIES GENERATED TRUE)
@@ -24,6 +25,7 @@ SET(leakyif_srcs
 	lif_main.c
 	lif_driver.c
 	lif_map.c
+	iohelper.c
 	model_config.h
 )
 

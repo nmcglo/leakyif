@@ -93,6 +93,11 @@ extern void lif_final( lif_neuron_state *s, tw_lp *lp);
 extern void lif_commit( lif_neuron_state *s, tw_bf *bf, neuron_mess *m, tw_lp *lp);
 
 
+//IO STUFF --------------------------------
+
+extern void exportArrayToCSV(char* filename, double* myArray, int length);
+extern void export2DArrayToCSV(char* filename, double** myArray, int width, int height);
+
 //MAIN STUFF-----------------------------
 
 extern tw_lptype model_lps[];

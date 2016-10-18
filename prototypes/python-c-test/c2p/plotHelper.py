@@ -22,5 +22,4 @@ def plotVHistory(inputCSVFileName):
     fig.savefig("Vhistory.png")
 
 
-# plotRaster("firings.csv")
-plotVHistory("vh.csv")
+plotRaster("tmp.csv")

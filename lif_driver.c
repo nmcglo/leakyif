@@ -242,11 +242,17 @@ void lif_final(lif_neuron_state *s, tw_lp *lp)
      int self = lp->gid;
      printf("%d: Total Firings Done: %d\n",self,s->firing_count);
 
-     if(self == 125)
+     if(self == total_neurons-1) //Last neuron
      {
-          for(int i = 0; i < simulation_length; i++)
-          {
-               printf("%f ",s->V_history[i]);
-          }
+          // for(int i = 0; i < simulation_length; i++)
+          // {
+          //      printf("%f ",s->V_history[i]);
+          // }
+          printf("Exporting VHistory...\n");
+          exportArrayToCSV("vh.csv", s->V_history, simulation_length);
+
+          system("python3 plotHelper.py");
      }
+
+
 }
