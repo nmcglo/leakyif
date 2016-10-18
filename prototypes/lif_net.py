@@ -1,7 +1,13 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import graphParser as gp
+
+#getting the graph parser module
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
+import graphParserV1 as gp
 
 
 RandomWeightFlag = False
@@ -116,7 +122,7 @@ def getInputCurrentAtTime(t,nodeid):
     if(len(firedIndicesICareAbout) > 0):
         for j in firedIndicesICareAbout:
             weightSum += Weights[j,nodeid]
-        print('Node %i: weights of fired neurons is %f'%(nodeid, weightSum))
+        # print('Node %i: weights of fired neurons is %f'%(nodeid, weightSum))
 
 
 
@@ -143,21 +149,22 @@ if __name__ == '__main__':
 
     init()
 
-    print("Final Weights\n", Weights)
+    print("Input File Parsed.")
+
+    # print("Final Weights\n", Weights)
 
     print("Beginning Simulation...")
 
 
     if RandomInputFiring is False:
         t_rest = np.random.rand(N)*refractory_length
+        for i in range(0,len(t_rest)):
+            t_rest[i] = int(t_rest[i])
     else:
         t_rest = np.zeros(N)
 
-    for i in range(0,len(t_rest)):
-        t_rest[i] = int(t_rest[i])
     for i in range(1, len(times)-1):
         t = times[i]
-
         #put the loop for per node here
         for n in range(0,N): #for each node n in N
             if n in InputIDs and RandomInputFiring:
@@ -166,7 +173,9 @@ if __name__ == '__main__':
                     toFire = isFiredDecision()
                     if toFire is True:
                         Fired[n,t] = 1
-                        t_rest[n] = t + np.random.rand()*refractory_length
+                        t_rest[n] = t + refractory_length
+                        # t_rest[n] = t + np.random.rand()*refractory_length
+
             else:
                 #Not an input node (or RandomINputFiring is not flagged), thus do traditional integrating and firing
                 if t > t_rest[n]:
@@ -175,7 +184,9 @@ if __name__ == '__main__':
                     print("Node %i Fired at time %i!" % (n, t))
                     Vm[n,t] = Vm[n,t] + V_spike
                     Fired[n,t] = 1
-                    t_rest[n] = t + np.random.rand()*refractory_length
+                    t_rest[n] = t + refractory_length
+                    # t_rest[n] = t + np.random.rand()*refractory_length
+
 
 
 

@@ -57,7 +57,6 @@ typedef struct
      bool is_Input_Neuron; //Is the neuron an input neuron?
      double chance_of_firing_each_timestep; //Chance of fireing each Timestep
 
-     int firing_count;
 
      int number_of_outgoing_connections;
      tw_lpid* outgoing_adjacency;
@@ -65,7 +64,13 @@ typedef struct
      int number_of_incoming_connections;
      double* incoming_weights;
 
+     int last_firing_time;
+
+     //Things for analysis
      double* V_history;
+     int firing_count;
+     bool* firing_history;
+
 
 } lif_neuron_state;
 

@@ -1,15 +1,16 @@
+#Graph Parser V1
+
 import numpy as np
 
 weightMultiplier = 30
 
 
 def parseGraphInput(inputFilename):
-
-    infile = open(inputFilename, 'r')
+    print("Graph Parser Version 1")
 
     print("Parsing the input file...")
     params = []
-    with open('input.txt', 'r') as f:
+    with open(inputFilename, 'r') as f:
         for line in f:
             s = line.split()
             param = list(map(int,(s[1].split(','))))
@@ -18,10 +19,14 @@ def parseGraphInput(inputFilename):
     print("Parameters: ",params)
     Layers = params[0][0]
     Populations = np.array(params[1])
-    InputIDs = range(Populations[0])
+
+    InputIDs = np.zeros(Populations[0])
+    for i in range(0,Populations[0]):
+        InputIDs[i] = i
+
     print("Layers: ", Layers)
     print("Populations:", Populations)
-
+    print("InputIDs:", InputIDs)
 
     TotalNodes = sum(Populations)
     print("Total Nodes: ",TotalNodes)
@@ -41,8 +46,8 @@ def parseGraphInput(inputFilename):
         for i in range(startndx,endndx+1):
             # print(i)
             for j in range(endndx+1,sum(Populations[0:p+2])):
-                print("\t",i,j)
-                W[i,j] = np.random.randn() * .5 + 1;
+                # print("\t",i,j)
+                W[i,j] = np.random.randn() * .5 + 1
 
 
     print("\nInteraction Matrix:")

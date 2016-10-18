@@ -32,6 +32,8 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
 
      s->should_fire_at_next_tick = false;
 
+     s->last_firing_time = 0;
+
      s->is_Input_Neuron = FALSE;
      s->chance_of_firing_each_timestep = 0;
      if (self < total_input_neurons)
@@ -78,6 +80,7 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      s->number_of_incoming_connections = inConnections;
 
      s->V_history = calloc(simulation_length, sizeof(double));
+     s->firing_history = calloc(simulation_length, sizeof(bool));
 }
 
 void lif_prerun(lif_neuron_state *s, tw_lp *lp)
@@ -88,7 +91,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
      {
           int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
 
-          printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
+          // printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
 
 
           for(int i = 0; i < total_firings; i++)
@@ -147,6 +150,8 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      }
      s->V_mem = 0;
      s->firing_count++;
+     s->last_firing_time = (int)tw_now(lp);
+     s->firing_history[(int)tw_now(lp)] = true;
 }
 
 
@@ -156,6 +161,13 @@ double get_external_current_at_time(double theTime, tw_lpid lpid)
      return 1.5;
 }
 
+int getTimeSinceLastFiring(lif_neuron_state *s, tw_lp *lp)
+{
+     int now = tw_now(lp);
+
+     return now - s->last_firing_time;
+
+}
 
 
 void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
@@ -171,7 +183,8 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                double I_input = s->I_input_at_big_tick;
 
                //Integrate
-               s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
+               if(getTimeSinceLastFiring(s,lp) > s->refract_length) //Can you integrate? or are you in resting?
+                    s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
 
                //Do you fire?
                if(s->V_mem > s->V_thresh)
@@ -183,7 +196,7 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
 
                if(s->should_fire_at_next_tick)
                {
-                    printf("%i: Heartbeat & I should fire. Going to do that now!\n",self);
+                    // printf("%i: Heartbeat & I should fire. Going to do that now!\n",self);
                     fire(s,lp);
                     s->should_fire_at_next_tick=false;
                }
