@@ -120,6 +120,31 @@ void parse_and_init()
           }
           // printf("\n");
      }
+
+     //exported data info to be collected at end
+     all_v_history = calloc(total_neurons,sizeof(double*));
+     for(int i = 0; i < total_neurons; i++)
+     {
+          all_v_history[i] = calloc(simulation_length,sizeof(double));
+     }
+
+     all_firing_history = calloc(total_neurons, sizeof(bool*));
+     for(int i = 0; i < total_neurons; i++)
+     {
+          all_firing_history[i] = calloc(simulation_length,sizeof(bool));
+     }
+
+}
+
+void exportFinalData()
+{
+          printf("Exporting Firing History...\n");
+          export2DBoolArrayToCSV("firings.csv", all_firing_history, simulation_length, total_neurons);
+
+          printf("Exporting V History...\n");
+          export2DArrayToCSV("vh.csv", all_v_history, simulation_length, total_neurons);
+          system("python3 plotHelper.py");
+
 }
 
 
@@ -135,7 +160,9 @@ int lif_main(int argc, char** argv, char **env)
      nlp_per_pe = 1;
      custom_LPs_per_pe = 1;
 
-     simulation_length = 1000;
+     simulation_length = 10000;
+
+     g_tw_events_per_pe = 1000000;
 
      g_tw_nlp = (total_neurons);
      g_tw_lookahead = 1;
@@ -152,6 +179,8 @@ int lif_main(int argc, char** argv, char **env)
 
      tw_run();
      tw_end();
+
+     exportFinalData();
 
 
      return 0;

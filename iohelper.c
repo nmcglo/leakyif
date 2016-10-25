@@ -32,3 +32,24 @@ void export2DArrayToCSV(char* filename, double** myArray, int width, int height)
      }
      fclose(fp);
 }
+
+
+void export2DBoolArrayToCSV(char* filename, bool** myArray, int width, int height)
+{
+     FILE *fp = fopen(filename,"w");
+
+     for(int i = 0; i < height; i++)
+     {
+          for(int j = 0; j < width; j++)
+          {
+               if (myArray[i][j] == true)
+                    fprintf(fp, "%i", 1);
+               else
+                    fprintf(fp, "%i", 0);
+               if(j != width - 1)
+                    fprintf(fp,",");
+          }
+          fprintf(fp,"\n");
+     }
+     fclose(fp);
+}

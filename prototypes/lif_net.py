@@ -36,7 +36,7 @@ def init():
 
 
     np.random.seed(1)
-    T = 1000
+    T = 10000
     tstep = 1
     refractory_length = 30
     times = np.arange(0,T,tstep)
@@ -51,7 +51,9 @@ def init():
     J_0 = 50
 
     # Current Inputs
-    Ibias = 1.5
+    # Ibias = 1.5
+    Ibias = 0
+
 
     N, Layers, Populations, InputIDs, Weights = gp.parseGraphInput('input.txt')
 
@@ -169,7 +171,8 @@ if __name__ == '__main__':
         for n in range(0,N): #for each node n in N
             if n in InputIDs and RandomInputFiring:
                 #Do random firing stuff here: Fired[n,t] = some random choice of 0 or 1 if t > t_test[n]
-                if t > t_rest[n]:
+                # if t > t_rest[n]:
+                if True:
                     toFire = isFiredDecision()
                     if toFire is True:
                         Fired[n,t] = 1
@@ -193,6 +196,11 @@ if __name__ == '__main__':
 
 
     print("Simulation Complete, generating graph...")
+
+    for nodei in range(N):
+        print("Node %i, fired count: %i"%(nodei,int(sum(Fired[nodei,:]))))
+
+
     fig1 = raster(Fired)
 
     plt.ylim(-.1,N)

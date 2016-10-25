@@ -22,7 +22,7 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      s->C_mem = 25;
      s->Tau = s->R_mem * s->C_mem;
 
-     s->V_thresh = .5;
+     s->V_thresh = 1.6;
      s->V_spike = .25;
 
      s->I_bias = 1.5;
@@ -89,6 +89,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
      if(s->is_Input_Neuron)
      {
+          // int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length) + ((tw_rand_unif(lp->rng) - .5) * 2 + 2);
           int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
 
           // printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
@@ -112,6 +113,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                tw_event_send(e);
           }
      }
+
      else
      {
           for(int i = 0; i < simulation_length; i++)
@@ -137,8 +139,8 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      int self = lp -> gid;
      for(int rec = 0; rec < s->number_of_outgoing_connections; rec++)
      {
-          tw_stime now = tw_now(lp);
-          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons * 10000); //TODO this is suspicious
+          int now = (int)tw_now(lp);
+          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*10000) + .5; //TODO this is suspicious
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
           tw_event *e = tw_event_new(recipient, now+delay, lp);
@@ -148,7 +150,7 @@ void fire(lif_neuron_state *s, tw_lp *lp)
           mess->recipient = recipient;
           tw_event_send(e);
      }
-     s->V_mem = 0;
+     s->V_mem = s->V_mem + s->V_spike;
      s->firing_count++;
      s->last_firing_time = (int)tw_now(lp);
      s->firing_history[(int)tw_now(lp)] = true;
@@ -178,36 +180,52 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
 
           if(in_msg->mess_type == HEARTBEAT_MESS) //Heartbeat message signifies at big ticks to integrate and check if there should be a firing or not
           {
-               // printf("%i: I received a heartbeat message\n",self);
-               double lastVmem = s->V_mem;
-               double I_input = s->I_input_at_big_tick;
-
-               //Integrate
-               if(getTimeSinceLastFiring(s,lp) > s->refract_length) //Can you integrate? or are you in resting?
-                    s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
-
-               //Do you fire?
-               if(s->V_mem > s->V_thresh)
+               if(s->is_Input_Neuron)
                {
-                    //If so then set yourselfs should fire to true
-                    s->should_fire_at_next_tick = true;
-               }
-
-
-               if(s->should_fire_at_next_tick)
-               {
-                    // printf("%i: Heartbeat & I should fire. Going to do that now!\n",self);
-                    fire(s,lp);
-                    s->should_fire_at_next_tick=false;
+                    // double chance = s->chance_of_firing_each_timestep;
+                    //
+                    // double rn = tw_rand_unif(lp->rng);
+                    //
+                    // if(rn > 1 - chance)
+                    // {
+                    //      //Fire
+                    //      fire(s,lp);
+                    // }
                }
                else
                {
-                    //TODO this is the dirac method where you only care about inputs that fired AT THIS MOMENT thus...
-                    s->I_input_at_big_tick = 0; //reset the input current.
+                    // printf("%i: I received a heartbeat message\n",self);
+                    double lastVmem;
+                    if((int) tw_now(lp) < 1)
+                         lastVmem = 0;
+                    else
+                         lastVmem = s->V_mem;
+
+                    double I_input = s->I_input_at_big_tick;
+
+                    //Integrate
+                    if(getTimeSinceLastFiring(s,lp) > s->refract_length) //Can you integrate? or are you in resting?
+                    {
+                         s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
+
+                         //Do you fire?
+                         if(s->V_mem >= s->V_thresh)
+                         {
+                              //If so then set yourselfs should fire to true
+                              fire(s,lp);
+                         }
+                    }
+                    else
+                    {
+                         s->V_mem = 0;
+                    }
+
+
+
+                    s->I_input_at_big_tick = 0;
+
+                    s->V_history[(int)tw_now(lp)] = s->V_mem;
                }
-
-               s->V_history[(int)tw_now(lp)] = s->V_mem;
-
 
           }
           else if(in_msg->mess_type == FIRING_MESS) //You received a firing message, do stuff
@@ -242,17 +260,22 @@ void lif_final(lif_neuron_state *s, tw_lp *lp)
      int self = lp->gid;
      printf("%d: Total Firings Done: %d\n",self,s->firing_count);
 
-     if(self == total_neurons-1) //Last neuron
-     {
-          // for(int i = 0; i < simulation_length; i++)
-          // {
-          //      printf("%f ",s->V_history[i]);
-          // }
-          printf("Exporting VHistory...\n");
-          exportArrayToCSV("vh.csv", s->V_history, simulation_length);
+     //export the data
+     all_firing_history[self] = s->firing_history;
+     all_v_history[self] = s->V_history;
 
-          system("python3 plotHelper.py");
-     }
+
+     // if(self == total_neurons-1) //Last neuron
+     // {
+     //      // for(int i = 0; i < simulation_length; i++)
+     //      // {
+     //      //      printf("%f ",s->V_history[i]);
+     //      // }
+     //      printf("Exporting VHistory...\n");
+     //      exportArrayToCSV("vh.csv", s->V_history, simulation_length);
+     //
+     //      system("python3 plotHelper.py");
+     // }
 
 
 }
