@@ -139,11 +139,11 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      int self = lp -> gid;
      for(int rec = 0; rec < s->number_of_outgoing_connections; rec++)
      {
-          int now = (int)tw_now(lp);
-          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*10000) + .5; //TODO this is suspicious
+          int next = (int)(tw_now(lp) + 1);
+          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*10000); //TODO this is suspicious
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
-          tw_event *e = tw_event_new(recipient, now+delay, lp);
+          tw_event *e = tw_event_new(recipient, next+delay, lp);
           neuron_mess *mess = tw_event_data(e);
           mess->mess_type = FIRING_MESS;
           mess->sender = self;
@@ -194,7 +194,7 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                }
                else
                {
-                    // printf("%i: I received a heartbeat message\n",self);
+                    printf("%i: %f I received a heartbeat message\n",self,tw_now(lp));
                     double lastVmem;
                     if((int) tw_now(lp) < 1)
                          lastVmem = 0;

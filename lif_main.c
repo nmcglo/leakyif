@@ -160,7 +160,7 @@ int lif_main(int argc, char** argv, char **env)
      nlp_per_pe = 1;
      custom_LPs_per_pe = 1;
 
-     simulation_length = 10000;
+     simulation_length = 1000;
 
      g_tw_events_per_pe = 1000000;
 
