@@ -15,6 +15,7 @@ AllToAllFlag = False
 NoInputLayerFlag = False
 AllExitatoryFlag = False
 RandomInputFiring = False
+UniformInputFiring = False
 
 
 if(len(sys.argv) > 1):
@@ -28,15 +29,17 @@ if(len(sys.argv) > 1):
         AllExitatoryFlag = True
     if "-randpre" in sys.argv:
         RandomInputFiring = True
+    if "-unifpre" in sys.argv:
+        UniformInputFiring = True
 
 
 def init():
-    global N, Layers, Populations, InputIDs, Weights, times, T, tstep, refractory_length, Rmem, Cmem, tau_m, Vthresh, V_spike, J_0, Vm, Fired, periods, Ibias
+    global N, Layers, Populations, InputIDs, InputFirings, Weights, times, T, tstep, refractory_length, Rmem, Cmem, tau_m, Vthresh, V_spike, J_0, Vm, Fired, periods, Ibias
     # global N
 
 
     np.random.seed(1)
-    T = 10000
+    T = 1000
     tstep = 1
     refractory_length = 30
     times = np.arange(0,T,tstep)
@@ -54,8 +57,10 @@ def init():
     # Ibias = 1.5
     Ibias = 0
 
-
     N, Layers, Populations, InputIDs, Weights = gp.parseGraphInput('input.txt')
+
+    chanceOfFiringEachTimestep = .5/N
+
 
     if AllToAllFlag is True:
         if RandomWeightFlag is False:
@@ -70,6 +75,18 @@ def init():
 
     if AllExitatoryFlag is True:
         Weights = abs(Weights)
+
+    if UniformInputFiring is True:
+        InputFirings = np.zeros((len(InputIDs),T))
+        for i in InputIDs:
+            n = int(i)
+            totalFirings = int(chanceOfFiringEachTimestep * T)
+            print(totalFirings)
+            for j in range(totalFirings):
+                schedFiredBigTick = np.random.rand() * T
+                schedFire = int(schedFiredBigTick)
+                print(schedFire)
+                InputFirings[n][schedFire] = 1
 
 
     Vm = np.zeros((N,len(times)))
@@ -136,14 +153,20 @@ def getInputCurrentAtTime(t,nodeid):
 
     return weightSum + Iext
 
-def isFiredDecision():
-    chanceOfFiringEachTimestep = .5/N
-
-    rn = np.random.rand()
-    if rn > 1 - chanceOfFiringEachTimestep:
-        return True
+def isFiredDecision(t,nodeid):
+    if UniformInputFiring:
+        if InputFirings[nodeid][t]==1:
+            return True
+        else:
+            return False
     else:
-        return False
+        # chanceOfFiringEachTimestep = .5/N #now in init()
+
+        rn = np.random.rand()
+        if rn > 1 - chanceOfFiringEachTimestep:
+            return True
+        else:
+            return False
 
 
 if __name__ == '__main__':
@@ -153,7 +176,7 @@ if __name__ == '__main__':
 
     print("Input File Parsed.")
 
-    # print("Final Weights\n", Weights)
+    print("Input Firings\n", InputFirings)
 
     print("Beginning Simulation...")
 
@@ -169,11 +192,11 @@ if __name__ == '__main__':
         t = times[i]
         #put the loop for per node here
         for n in range(0,N): #for each node n in N
-            if n in InputIDs and RandomInputFiring:
+            if n in InputIDs and (RandomInputFiring or UniformInputFiring):
                 #Do random firing stuff here: Fired[n,t] = some random choice of 0 or 1 if t > t_test[n]
                 # if t > t_rest[n]:
                 if True:
-                    toFire = isFiredDecision()
+                    toFire = isFiredDecision(t,n)
                     if toFire is True:
                         Fired[n,t] = 1
                         t_rest[n] = t + refractory_length
