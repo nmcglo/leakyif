@@ -2,11 +2,12 @@
 
 import numpy as np
 
+np.random.seed(1)
 weightMultiplier = 30
 
 
 def parseGraphInput(inputFilename):
-    print("Graph Parser Version 1")
+    print("Graph Parser Version 1.1")
 
     print("Parsing the input file...")
     params = []

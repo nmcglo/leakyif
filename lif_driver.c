@@ -29,6 +29,11 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      s->I_input_at_big_tick = 0;
 
      s->V_mem = 0;
+     s->V_last = 0;
+
+     s->rec_firings = calloc(total_neurons, sizeof(tw_lpid));
+     s->total_rec_firings = 0;
+     s->grand_total_rec_firings = 0;
 
      s->should_fire_at_next_tick = false;
 
@@ -60,8 +65,14 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      }
 
      s->number_of_outgoing_connections = outConnections;
-     s->outgoing_adjacency = realloc(s->outgoing_adjacency, outConnections * sizeof(tw_lpid)); //Trimming the end and freeing up the previously allocated zeros
+     // s->outgoing_adjacency = realloc(s->outgoing_adjacency, outConnections * sizeof(tw_lpid)); //Trimming the end and freeing up the previously allocated zeros
 
+     printf("Outgoing Adjacency\n");
+     for(int c = 0; c < total_neurons; c++)
+     {
+          printf("%llu, ",s->outgoing_adjacency[c]);
+     }
+     printf("\n");
 
      //----------------------------
      //Incoming connections stuff
@@ -78,6 +89,13 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
           }
      }
      s->number_of_incoming_connections = inConnections;
+
+     printf("Incoming Weights\n");
+     for(int r = 0; r < total_neurons; r++)
+     {
+          printf("%.3f, ", s->incoming_weights[r]);
+     }
+     printf("\n");
 
      s->V_history = calloc(simulation_length, sizeof(double));
      s->firing_history = calloc(simulation_length, sizeof(bool));
@@ -129,18 +147,18 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                tw_event_send(e);
           }
 
-          for(int i = 0; i < total_firings; i++)
-          {
-               printf("%i, ",firing_set[i]);
-          }
-          printf("\n");
+          // for(int i = 0; i < total_firings; i++)
+          // {
+          //      printf("%i, ",firing_set[i]);
+          // }
+          // printf("\n");
      }
 
      else
      {
           for(int i = 1; i < simulation_length; i++)
           {
-               double jitter = tw_rand_unif(lp->rng)/(total_neurons * 10000);
+               double jitter = tw_rand_unif(lp->rng)/(total_neurons * 100);
                double big_tick_with_jitter = i + jitter;
 
                tw_event *e = tw_event_new(self,big_tick_with_jitter,lp);
@@ -163,7 +181,7 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      {
           int next = getNextBigTick(lp);
           double halfwayToNext = next - .5;
-          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*10000); //TODO this is suspicious
+          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*100); //TODO this is suspicious
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
           tw_event *e = tw_event_new(recipient, halfwayToNext+delay, lp);
@@ -193,7 +211,7 @@ double get_external_current_at_time(double theTime, tw_lpid lpid)
 
 int getTimeSinceLastFiring(lif_neuron_state *s, tw_lp *lp)
 {
-     int now = tw_now(lp);
+     int now = (int)tw_now(lp);
 
      return now - s->last_firing_time;
 
@@ -222,12 +240,25 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                }
                else
                {
+                    if(s->total_rec_firings > 0)
+                    {
+                         printf("Received Firings: ");
+                         for(int i =0; i < s->total_rec_firings; i++)
+                         {
+                              printf("%i, ",s->rec_firings[i]);
+                         }
+                         printf(" at time: %i\n", ((int) tw_now(lp)));
+                         s->rec_firings = calloc(total_neurons, sizeof(tw_lpid));
+                         s->total_rec_firings = 0;
+                    }
+
+
                     // printf("%i: %f I received a heartbeat message\n",self,tw_now(lp));
-                    double lastVmem;
-                    if((int) tw_now(lp) < 1)
-                         lastVmem = 0;
-                    else
-                         lastVmem = s->V_mem;
+                    double lastVmem = s->V_last;
+                    // if((int) tw_now(lp) < 1)
+                    //      lastVmem = 0;
+                    // else
+                    //      lastVmem = s->V_mem;
 
                     double I_input = s->I_input_at_big_tick;
 
@@ -253,6 +284,7 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                     s->I_input_at_big_tick = 0;
 
                     s->V_history[(int)tw_now(lp)] = s->V_mem;
+                    s->V_last = s->V_mem;
                }
 
           }
@@ -262,6 +294,9 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
 
                //Get who the message is from
                tw_lpid sender = in_msg->sender;
+               s->rec_firings[s->total_rec_firings] = sender;
+               s->total_rec_firings +=1;
+               s->grand_total_rec_firings +=1;
 
                //Lookup the strength of the message from your states incoming weights array
                double inWeight = s->incoming_weights[sender];
@@ -287,7 +322,7 @@ void lif_final(lif_neuron_state *s, tw_lp *lp)
 {
      int self = lp->gid;
      printf("%d: Total Firings Done: %d\n",self,s->firing_count);
-
+     printf("%d: Total Firings Received: %d\n",self,s->grand_total_rec_firings);
      //export the data
      all_firing_history[self] = s->firing_history;
      all_v_history[self] = s->V_history;

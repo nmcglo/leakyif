@@ -51,6 +51,11 @@ typedef struct
      double I_input_at_big_tick; //The input current, based on the weights of neurons that sent messages to it in this tick
 
      double V_mem; //The Voltage of the membrane
+     double V_last;
+
+     int* rec_firings;
+     int total_rec_firings;
+     int grand_total_rec_firings;
 
      bool should_fire_at_next_tick;
 

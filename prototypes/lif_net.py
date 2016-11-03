@@ -34,7 +34,7 @@ if(len(sys.argv) > 1):
 
 
 def init():
-    global N, Layers, Populations, InputIDs, InputFirings, Weights, times, T, tstep, refractory_length, Rmem, Cmem, tau_m, Vthresh, V_spike, J_0, Vm, Fired, periods, Ibias
+    global N, Layers, Populations, InputIDs, InputFirings, GrandFirings, Weights, times, T, tstep, refractory_length, Rmem, Cmem, tau_m, Vthresh, V_spike, J_0, Vm, Fired, periods, Ibias
     # global N
 
 
@@ -45,8 +45,8 @@ def init():
     times = np.arange(0,T,tstep)
 
     # same for all neurons
-    Rmem = 10
-    Cmem = 25
+    Rmem = 10.
+    Cmem = 25.
     tau_m = Rmem*Cmem
     Vthresh = 1.6
     V_spike = .25
@@ -99,6 +99,8 @@ def init():
     Vm = np.zeros((N,len(times)))
     Fired = np.zeros((N,len(times))) #zero if not, 1 if did
 
+    GrandFirings = np.zeros(N);
+
     # randomShuffleOfIds = np.arange(0,N)
     # np.random.shuffle(randomShuffleOfIds)
     # toBeFiredFirst = randomShuffleOfIds[0:int(N/10)]
@@ -137,14 +139,19 @@ def getInputCurrentAtTime(t,nodeid):
     #TODO this currently does the "did you fire right now" approach (dirac): generalize it.
     firedForNow = Fired[:,t-1]
     indicesICareAbout = set(np.nonzero(Weights[:,nodeid])[0])
+    # print("Indices I care About", indicesICareAbout)
     indicesOfFired = set(np.nonzero(firedForNow)[0])
+    # print("Indices Fired", indicesOfFired)
 
     firedIndicesICareAbout = list(indicesICareAbout & indicesOfFired)
+    if(len(firedIndicesICareAbout) > 0):
+        print(nodeid, ": Received Firings:", firedIndicesICareAbout, "at time:",t)
+        GrandFirings[nodeid] += len(firedIndicesICareAbout)
 
     # if(len(firedIndicesICareAbout) > 0):
         # print(t, firedIndicesICareAbout)
 
-    weightSum = 0
+    weightSum = 0.0
     if(len(firedIndicesICareAbout) > 0):
         for j in firedIndicesICareAbout:
             weightSum += Weights[j,nodeid]
@@ -212,7 +219,7 @@ if __name__ == '__main__':
             else:
                 #Not an input node (or RandomINputFiring is not flagged), thus do traditional integrating and firing
                 if t > t_rest[n]:
-                    Vm[n,t] = Vm[n,i-1] + ((-Vm[n,t-1] + getInputCurrentAtTime(t,n)*Rmem) / tau_m) #* timestep
+                    Vm[n,t] = Vm[n,i-1] + ((-Vm[n,t-1] + getInputCurrentAtTime(t,n)*Rmem) / float(tau_m)) #* timestep
                 if Vm[n,t] >= Vthresh:
                     print("Node %i Fired at time %i!" % (n, t))
                     Vm[n,t] = Vm[n,t] + V_spike
@@ -229,6 +236,7 @@ if __name__ == '__main__':
 
     for nodei in range(N):
         print("Node %i, fired count: %i"%(nodei,int(sum(Fired[nodei,:]))))
+        print("Node %i, received firings %i"%(nodei,GrandFirings[nodei]))
 
 
     fig1 = raster(Fired)
