@@ -91,6 +91,7 @@ extern void lif_event_handler( lif_neuron_state *s, tw_bf *bf, neuron_mess *in_m
 extern void lif_RC_event_handler( lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp);
 extern void lif_final( lif_neuron_state *s, tw_lp *lp);
 extern void lif_commit( lif_neuron_state *s, tw_bf *bf, neuron_mess *m, tw_lp *lp);
+extern int getNextBigTick(tw_lp *lp);
 
 
 //IO STUFF --------------------------------

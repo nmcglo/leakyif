@@ -92,7 +92,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
           // int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length) + ((tw_rand_unif(lp->rng) - .5) * 2 + 2);
           int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
 
-          // printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
+          printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
 
           int* firing_set = calloc(total_firings, sizeof(int));
           for(int i = 0; i < total_firings; i++)
@@ -111,7 +111,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                if(alreadyIn)
                {
                     i--;
-                    break;
+                    continue;
                }
                firing_set[i] = (int) scheduled_firing_big_tick;
 
@@ -138,7 +138,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
      else
      {
-          for(int i = 0; i < simulation_length; i++)
+          for(int i = 1; i < simulation_length; i++)
           {
                double jitter = tw_rand_unif(lp->rng)/(total_neurons * 10000);
                double big_tick_with_jitter = i + jitter;
@@ -161,11 +161,12 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      int self = lp -> gid;
      for(int rec = 0; rec < s->number_of_outgoing_connections; rec++)
      {
-          int next = (int)(tw_now(lp) + 1);
+          int next = getNextBigTick(lp);
+          double halfwayToNext = next - .5;
           tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*10000); //TODO this is suspicious
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
-          tw_event *e = tw_event_new(recipient, next+delay, lp);
+          tw_event *e = tw_event_new(recipient, halfwayToNext+delay, lp);
           neuron_mess *mess = tw_event_data(e);
           mess->mess_type = FIRING_MESS;
           mess->sender = self;
@@ -178,6 +179,11 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      s->firing_history[(int)tw_now(lp)] = true;
 }
 
+int getNextBigTick(tw_lp *lp)
+{
+     int now = (int) tw_now(lp);
+     return now+1;
+}
 
 double get_external_current_at_time(double theTime, tw_lpid lpid)
 {
