@@ -94,11 +94,27 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
           // printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
 
-
+          int* firing_set = calloc(total_firings, sizeof(int));
           for(int i = 0; i < total_firings; i++)
           {
 
                double scheduled_firing_big_tick = tw_rand_unif(lp->rng)*simulation_length;
+               bool alreadyIn = false;
+               for(int j = 0; j < total_firings; j++)
+               {
+                    if(firing_set[j] == (int) scheduled_firing_big_tick)
+                    {
+                         alreadyIn = true;
+                         break;
+                    }
+               }
+               if(alreadyIn)
+               {
+                    i--;
+                    break;
+               }
+               firing_set[i] = (int) scheduled_firing_big_tick;
+
                double jitter = tw_rand_unif(lp->rng)/(total_neurons * 10000);
 
                double big_tick_with_jitter = ((int) scheduled_firing_big_tick) + jitter;
@@ -112,6 +128,12 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                mess->recipient = self;
                tw_event_send(e);
           }
+
+          for(int i = 0; i < total_firings; i++)
+          {
+               printf("%i, ",firing_set[i]);
+          }
+          printf("\n");
      }
 
      else
@@ -194,7 +216,7 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                }
                else
                {
-                    printf("%i: %f I received a heartbeat message\n",self,tw_now(lp));
+                    // printf("%i: %f I received a heartbeat message\n",self,tw_now(lp));
                     double lastVmem;
                     if((int) tw_now(lp) < 1)
                          lastVmem = 0;

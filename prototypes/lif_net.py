@@ -81,12 +81,19 @@ def init():
         for i in InputIDs:
             n = int(i)
             totalFirings = int(chanceOfFiringEachTimestep * T)
-            print(totalFirings)
-            for j in range(totalFirings):
+            # print(totalFirings)
+            firingSet = set()
+            setNotFilled = True
+            count = 0
+            while setNotFilled:
                 schedFiredBigTick = np.random.rand() * T
                 schedFire = int(schedFiredBigTick)
-                print(schedFire)
-                InputFirings[n][schedFire] = 1
+                if schedFire not in firingSet:
+                    firingSet.add(schedFire)
+                    count +=1
+                    InputFirings[n][schedFire] = 1
+                    if count == totalFirings:
+                        setNotFilled = False
 
 
     Vm = np.zeros((N,len(times)))
