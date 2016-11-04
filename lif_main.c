@@ -144,7 +144,6 @@ void exportFinalData()
           printf("Exporting V History...\n");
           export2DArrayToCSV("vh.csv", all_v_history, simulation_length, total_neurons);
           system("python3 plotHelper.py");
-
 }
 
 

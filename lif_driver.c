@@ -65,7 +65,6 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      }
 
      s->number_of_outgoing_connections = outConnections;
-     // s->outgoing_adjacency = realloc(s->outgoing_adjacency, outConnections * sizeof(tw_lpid)); //Trimming the end and freeing up the previously allocated zeros
 
      printf("Outgoing Adjacency\n");
      for(int c = 0; c < total_neurons; c++)
