@@ -202,7 +202,7 @@ if __name__ == '__main__':
     else:
         t_rest = np.zeros(N)
 
-    for i in range(1, len(times)-1):
+    for i in range(0, len(times)-1):
         t = times[i]
         #put the loop for per node here
         for n in range(0,N): #for each node n in N

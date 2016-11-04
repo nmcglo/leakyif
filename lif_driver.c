@@ -66,12 +66,12 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
 
      s->number_of_outgoing_connections = outConnections;
 
-     printf("Outgoing Adjacency\n");
-     for(int c = 0; c < total_neurons; c++)
-     {
-          printf("%llu, ",s->outgoing_adjacency[c]);
-     }
-     printf("\n");
+     // printf("Outgoing Adjacency\n");
+     // for(int c = 0; c < total_neurons; c++)
+     // {
+     //      printf("%llu, ",s->outgoing_adjacency[c]);
+     // }
+     // printf("\n");
 
      //----------------------------
      //Incoming connections stuff
@@ -89,12 +89,12 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
      }
      s->number_of_incoming_connections = inConnections;
 
-     printf("Incoming Weights\n");
-     for(int r = 0; r < total_neurons; r++)
-     {
-          printf("%.3f, ", s->incoming_weights[r]);
-     }
-     printf("\n");
+     // printf("Incoming Weights\n");
+     // for(int r = 0; r < total_neurons; r++)
+     // {
+     //      printf("%.3f, ", s->incoming_weights[r]);
+     // }
+     // printf("\n");
 
      s->V_history = calloc(simulation_length, sizeof(double));
      s->firing_history = calloc(simulation_length, sizeof(bool));
