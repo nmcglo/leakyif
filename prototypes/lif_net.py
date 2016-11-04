@@ -218,8 +218,9 @@ if __name__ == '__main__':
 
             else:
                 #Not an input node (or RandomINputFiring is not flagged), thus do traditional integrating and firing
+                cur = getInputCurrentAtTime(t,n)
                 if t > t_rest[n]:
-                    Vm[n,t] = Vm[n,i-1] + ((-Vm[n,t-1] + getInputCurrentAtTime(t,n)*Rmem) / float(tau_m)) #* timestep
+                    Vm[n,t] = Vm[n,i-1] + ((-Vm[n,t-1] + cur*Rmem) / float(tau_m)) #* timestep
                 if Vm[n,t] >= Vthresh:
                     print("Node %i Fired at time %i!" % (n, t))
                     Vm[n,t] = Vm[n,t] + V_spike

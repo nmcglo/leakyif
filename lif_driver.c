@@ -182,9 +182,10 @@ void fire(lif_neuron_state *s, tw_lp *lp)
           int next = getNextBigTick(lp);
           double halfwayToNext = next - .5;
           tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*100); //TODO this is suspicious
+          // printf("node %i time %.3f: fire message delivery scheudled at time: %.3f to %i\n",self,tw_now(lp),halfwayToNext+delay,s->outgoing_adjacency[rec]);
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
-          tw_event *e = tw_event_new(recipient, halfwayToNext+delay, lp);
+          tw_event *e = tw_event_new(recipient, .5+delay, lp);
           neuron_mess *mess = tw_event_data(e);
           mess->mess_type = FIRING_MESS;
           mess->sender = self;
@@ -242,12 +243,12 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                {
                     if(s->total_rec_firings > 0)
                     {
-                         printf("Received Firings: ");
-                         for(int i =0; i < s->total_rec_firings; i++)
-                         {
-                              printf("%i, ",s->rec_firings[i]);
-                         }
-                         printf(" at time: %i\n", ((int) tw_now(lp)));
+                         // printf("Node %i time %.3f: Received Firings: ",self,tw_now(lp));
+                         // for(int i =0; i < s->total_rec_firings; i++)
+                         // {
+                         //      printf("%i, ",s->rec_firings[i]);
+                         // }
+                         // printf(" at time: %i\n", ((int) tw_now(lp)));
                          s->rec_firings = calloc(total_neurons, sizeof(tw_lpid));
                          s->total_rec_firings = 0;
                     }
@@ -307,6 +308,10 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
                tw_stime theTime = tw_now(lp);
                // printf("%i: I received a firing order at %f: firing...\n",self,theTime);
                fire(s, lp);
+          }
+          else
+          {
+               printf("THIS SHOULD NOT HAPPEN!");
           }
      }
 
