@@ -107,7 +107,6 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
      if(s->is_Input_Neuron)
      {
-          // int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length) + ((tw_rand_unif(lp->rng) - .5) * 2 + 2);
           int total_firings = (int) (s->chance_of_firing_each_timestep * simulation_length);
 
           printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
@@ -115,7 +114,6 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
           int* firing_set = calloc(total_firings, sizeof(int));
           for(int i = 0; i < total_firings; i++)
           {
-
                double scheduled_firing_big_tick = tw_rand_unif(lp->rng)*simulation_length;
                bool alreadyIn = false;
                for(int j = 0; j < total_firings; j++)
@@ -146,12 +144,6 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                mess->recipient = self;
                tw_event_send(e);
           }
-
-          // for(int i = 0; i < total_firings; i++)
-          // {
-          //      printf("%i, ",firing_set[i]);
-          // }
-          // printf("\n");
      }
 
      else
@@ -181,8 +173,7 @@ void fire(lif_neuron_state *s, tw_lp *lp)
      {
           int next = getNextBigTick(lp);
           double halfwayToNext = next - .5;
-          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*100); //TODO this is suspicious
-          // printf("node %i time %.3f: fire message delivery scheudled at time: %.3f to %i\n",self,tw_now(lp),halfwayToNext+delay,s->outgoing_adjacency[rec]);
+          tw_stime delay = tw_rand_unif(lp->rng)/(total_neurons*100);
 
           tw_lpid recipient = s->outgoing_adjacency[rec];
           tw_event *e = tw_event_new(recipient, .5+delay, lp);
@@ -213,9 +204,7 @@ double get_external_current_at_time(double theTime, tw_lpid lpid)
 int getTimeSinceLastFiring(lif_neuron_state *s, tw_lp *lp)
 {
      int now = (int)tw_now(lp);
-
      return now - s->last_firing_time;
-
 }
 
 
@@ -227,63 +216,28 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
 
           if(in_msg->mess_type == HEARTBEAT_MESS) //Heartbeat message signifies at big ticks to integrate and check if there should be a firing or not
           {
-               if(s->is_Input_Neuron)
-               {
-                    // double chance = s->chance_of_firing_each_timestep;
-                    //
-                    // double rn = tw_rand_unif(lp->rng);
-                    //
-                    // if(rn > 1 - chance)
-                    // {
-                    //      //Fire
-                    //      fire(s,lp);
-                    // }
-               }
-               else
+               if(s->is_Input_Neuron == false)
                {
                     if(s->total_rec_firings > 0)
                     {
-                         // printf("Node %i time %.3f: Received Firings: ",self,tw_now(lp));
-                         // for(int i =0; i < s->total_rec_firings; i++)
-                         // {
-                         //      printf("%i, ",s->rec_firings[i]);
-                         // }
-                         // printf(" at time: %i\n", ((int) tw_now(lp)));
                          s->rec_firings = calloc(total_neurons, sizeof(tw_lpid));
                          s->total_rec_firings = 0;
                     }
 
-
-                    // printf("%i: %f I received a heartbeat message\n",self,tw_now(lp));
                     double lastVmem = s->V_last;
-                    // if((int) tw_now(lp) < 1)
-                    //      lastVmem = 0;
-                    // else
-                    //      lastVmem = s->V_mem;
-
                     double I_input = s->I_input_at_big_tick;
 
-                    //Integrate
                     if(getTimeSinceLastFiring(s,lp) > s->refract_length) //Can you integrate? or are you in resting?
                     {
                          s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
-
-                         //Do you fire?
-                         if(s->V_mem >= s->V_thresh)
-                         {
-                              //If so then set yourselfs should fire to true
+                         if(s->V_mem >= s->V_thresh) //Do you fire?
                               fire(s,lp);
-                         }
                     }
                     else
                     {
                          s->V_mem = 0;
                     }
-
-
-
                     s->I_input_at_big_tick = 0;
-
                     s->V_history[(int)tw_now(lp)] = s->V_mem;
                     s->V_last = s->V_mem;
                }
@@ -291,8 +245,6 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
           }
           else if(in_msg->mess_type == FIRING_MESS) //You received a firing message, do stuff
           {
-               // printf("%i: I received a firing!\n",self);
-
                //Get who the message is from
                tw_lpid sender = in_msg->sender;
                s->rec_firings[s->total_rec_firings] = sender;
@@ -306,16 +258,9 @@ void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_l
           else if(in_msg->mess_type == INPUT_FIRE_ORDER) //You received an input firing order, fire now. regardless of anything. assume this is big tick.
           {
                tw_stime theTime = tw_now(lp);
-               // printf("%i: I received a firing order at %f: firing...\n",self,theTime);
                fire(s, lp);
           }
-          else
-          {
-               printf("THIS SHOULD NOT HAPPEN!");
-          }
      }
-
-
 }
 
 void lif_RC_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
@@ -331,19 +276,4 @@ void lif_final(lif_neuron_state *s, tw_lp *lp)
      //export the data
      all_firing_history[self] = s->firing_history;
      all_v_history[self] = s->V_history;
-
-
-     // if(self == total_neurons-1) //Last neuron
-     // {
-     //      // for(int i = 0; i < simulation_length; i++)
-     //      // {
-     //      //      printf("%f ",s->V_history[i]);
-     //      // }
-     //      printf("Exporting VHistory...\n");
-     //      exportArrayToCSV("vh.csv", s->V_history, simulation_length);
-     //
-     //      system("python3 plotHelper.py");
-     // }
-
-
 }
