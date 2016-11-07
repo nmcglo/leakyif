@@ -98,6 +98,8 @@ void lif_init (lif_neuron_state *s, tw_lp *lp)
 
      s->V_history = calloc(simulation_length, sizeof(double));
      s->firing_history = calloc(simulation_length, sizeof(bool));
+
+     s->rng_count = 0;
 }
 
 void lif_prerun(lif_neuron_state *s, tw_lp *lp)
@@ -110,6 +112,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
           printf("%d: I am an input neuron! Total firings: %i\n",self, total_firings);
 
+          s->rng_count += total_firings;
           int* firing_set = calloc(total_firings, sizeof(int));
           for(int i = 0; i < total_firings; i++)
           {
@@ -130,7 +133,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                }
                firing_set[i] = (int) scheduled_firing_big_tick;
 
-               double jitter = tw_rand_unif(lp->rng)/(total_neurons * 10000);
+               double jitter = tw_rand_unif(lp->rng)/(total_neurons * 100);
 
                double big_tick_with_jitter = ((int) scheduled_firing_big_tick) + jitter;
 
@@ -138,7 +141,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
                // printf("%d: Scheudled fire order for time: %i\n",self,nextTime);
                tw_event *e = tw_event_new(self,big_tick_with_jitter,lp);
                neuron_mess *mess = tw_event_data(e);
-               mess->mess_type = INPUT_FIRE_ORDER;
+               mess->mess_type = INPUT;
                mess->sender = self;
                mess->recipient = self;
                tw_event_send(e);
@@ -147,6 +150,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
      else
      {
+          s->rng_count += simulation_length;
           for(int i = 1; i < simulation_length; i++)
           {
                double jitter = tw_rand_unif(lp->rng)/(total_neurons * 100);
@@ -154,7 +158,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 
                tw_event *e = tw_event_new(self,big_tick_with_jitter,lp);
                neuron_mess *mess = tw_event_data(e);
-               mess->mess_type = HEARTBEAT_MESS;
+               mess->mess_type = HEARTBEAT;
                mess->sender = self;
                mess->recipient = self;
                tw_event_send(e);
@@ -168,6 +172,7 @@ void lif_prerun(lif_neuron_state *s, tw_lp *lp)
 void fire(lif_neuron_state *s, tw_lp *lp)
 {
      int self = lp -> gid;
+     s->rng_count += s->number_of_outgoing_connections;
      for(int rec = 0; rec < s->number_of_outgoing_connections; rec++)
      {
           int next = getNextBigTick(lp);
@@ -177,9 +182,10 @@ void fire(lif_neuron_state *s, tw_lp *lp)
           tw_lpid recipient = s->outgoing_adjacency[rec];
           tw_event *e = tw_event_new(recipient, .5+delay, lp);
           neuron_mess *mess = tw_event_data(e);
-          mess->mess_type = FIRING_MESS;
+          mess->mess_type = FIRING;
           mess->sender = self;
           mess->recipient = recipient;
+          printf("%i: Sending Firing Message to: %llu cur time %.2f\n",self,recipient,tw_now(lp));
           tw_event_send(e);
      }
      s->V_mem = s->V_mem + s->V_spike;
@@ -209,62 +215,77 @@ int getTimeSinceLastFiring(lif_neuron_state *s, tw_lp *lp)
 
 void lif_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
 {
+     in_msg -> encodedState = *s;
      if(tw_now(lp) < simulation_length)
      {
           int self = lp -> gid;
 
-          if(in_msg->mess_type == HEARTBEAT_MESS) //Heartbeat message signifies at big ticks to integrate and check if there should be a firing or not
+          switch(in_msg->mess_type)
           {
-               if(s->is_Input_Neuron == false)
+               case HEARTBEAT:
                {
-                    if(s->total_rec_firings > 0)
+                    if(s->is_Input_Neuron == false)
                     {
-                         s->rec_firings = calloc(total_neurons, sizeof(tw_lpid));
-                         s->total_rec_firings = 0;
-                    }
+                         if(s->total_rec_firings > 0)
+                         {
+                              s->rec_firings = calloc(total_neurons, sizeof(tw_lpid));
+                              s->total_rec_firings = 0;
+                         }
 
-                    double lastVmem = s->V_last;
-                    double I_input = s->I_input_at_big_tick;
+                         double lastVmem = s->V_last;
+                         double I_input = s->I_input_at_big_tick;
 
-                    if(getTimeSinceLastFiring(s,lp) > s->refract_length) //Can you integrate? or are you in resting?
-                    {
-                         s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
-                         if(s->V_mem >= s->V_thresh) //Do you fire?
-                              fire(s,lp);
+                         if(getTimeSinceLastFiring(s,lp) > s->refract_length) //Can you integrate? or are you in resting?
+                         {
+                              s->V_mem = lastVmem + ((-lastVmem + I_input*s->R_mem)/s->Tau);
+                              if(s->V_mem >= s->V_thresh) //Do you fire?
+                                   fire(s,lp);
+                         }
+                         else
+                         {
+                              s->V_mem = 0;
+                         }
+                         s->I_input_at_big_tick = 0;
+                         s->V_history[(int)tw_now(lp)] = s->V_mem;
+                         s->V_last = s->V_mem;
                     }
-                    else
-                    {
-                         s->V_mem = 0;
-                    }
-                    s->I_input_at_big_tick = 0;
-                    s->V_history[(int)tw_now(lp)] = s->V_mem;
-                    s->V_last = s->V_mem;
+                    break;
+               }
+               case FIRING:
+               {
+                    //Get who the message is from
+                    tw_lpid sender = in_msg->sender;
+                    s->rec_firings[s->total_rec_firings] = sender;
+                    s->total_rec_firings +=1;
+                    s->grand_total_rec_firings +=1;
+
+                    //Lookup the strength of the message from your states incoming weights array
+                    double inWeight = s->incoming_weights[sender];
+                    s->I_input_at_big_tick += inWeight;
+                    break;
+               }
+               case INPUT:
+               {
+                    tw_stime theTime = tw_now(lp);
+                    fire(s, lp);
+                    break;
                }
 
-          }
-          else if(in_msg->mess_type == FIRING_MESS) //You received a firing message, do stuff
-          {
-               //Get who the message is from
-               tw_lpid sender = in_msg->sender;
-               s->rec_firings[s->total_rec_firings] = sender;
-               s->total_rec_firings +=1;
-               s->grand_total_rec_firings +=1;
-
-               //Lookup the strength of the message from your states incoming weights array
-               double inWeight = s->incoming_weights[sender];
-               s->I_input_at_big_tick += inWeight;
-          }
-          else if(in_msg->mess_type == INPUT_FIRE_ORDER) //You received an input firing order, fire now. regardless of anything. assume this is big tick.
-          {
-               tw_stime theTime = tw_now(lp);
-               fire(s, lp);
           }
      }
 }
 
 void lif_RC_event_handler(lif_neuron_state *s, tw_bf *bf, neuron_mess *in_msg, tw_lp *lp)
 {
+     int cur_rng_count = s->rng_count;
+     int prev_rng_count = (in_msg->encodedState).rng_count;
+     int total_rollbacks_needed = cur_rng_count - prev_rng_count;
 
+     for(int i = 0; i<total_rollbacks_needed; i++)
+     {
+          tw_rand_reverse_unif(lp->rng);
+     }
+     s = &(in_msg->encodedState);
 }
 
 void lif_final(lif_neuron_state *s, tw_lp *lp)
