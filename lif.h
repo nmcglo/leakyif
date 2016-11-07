@@ -16,26 +16,15 @@ Neil McGlohon
 #define FALSE 0
 #define TRUE 1
 
-#define HEARTBEAT_MESS 0
-#define FIRING_MESS 1
-#define INPUT_FIRE_ORDER 2
 
 
 //STRUCTS ------------------------------
-
-// typedef struct
-// {
-//      tw_lpid reverseNeighborID;
-//      double synapseWeight;
-// } synapticConnection;
-
-typedef struct
+typedef enum
 {
-     tw_lpid sender;
-     tw_lpid recipient;
-     int mess_type;
-} neuron_mess;
-
+     HEARTBEAT = 1,
+     FIRING,
+     INPUT
+} lif_msg_type;
 
 typedef struct
 {
@@ -76,9 +65,18 @@ typedef struct
      int firing_count;
      bool* firing_history;
 
+     int rng_count;
 
 } lif_neuron_state;
 
+
+typedef struct
+{
+     tw_lpid sender;
+     tw_lpid recipient;
+     lif_msg_type mess_type;
+     lif_neuron_state encodedState;
+} neuron_mess;
 
 
 //MAPPING -----------------------------

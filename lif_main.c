@@ -164,7 +164,7 @@ int lif_main(int argc, char** argv, char **env)
      g_tw_events_per_pe = 1000000;
 
      g_tw_nlp = (total_neurons);
-     g_tw_lookahead = 1;
+     g_tw_lookahead = .0001;
      custom_LPs_per_pe = (g_tw_nlp / g_tw_npe)/tw_nnodes();
 
      displayModelSettings();
@@ -179,7 +179,7 @@ int lif_main(int argc, char** argv, char **env)
      tw_run();
      tw_end();
 
-     exportFinalData();
+     // exportFinalData();
 
 
      return 0;
