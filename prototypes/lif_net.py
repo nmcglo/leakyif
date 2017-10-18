@@ -250,6 +250,9 @@ if __name__ == '__main__':
 
     fig2 = plt.figure()
     plt.plot(Vm[N-1,:])
+    plt.title("Membrane Voltage of Ouput Neuron")
+    plt.xlabel("Time t")
+    plt.ylabel("Voltage v")
 
     plt.show()
 
